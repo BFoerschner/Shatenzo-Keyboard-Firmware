@@ -1,5 +1,7 @@
 // Shatenzo.ino
 
+const byte MODIFIERKEY_FN = 255;
+
 // Public Constants to mess around with ---------------------------------------
 const byte NUMBER_OF_ROWS = 5;
 const byte NUMBER_OF_COLUMNS = 14;
@@ -12,11 +14,11 @@ const byte debounceValue = 35;  // Increase the value if you have multiple keyDo
 
 // Public Keyboard stuff, change this here for your needs ---------------------
 int layer1[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS] = {
-    {KEY_ESC, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL, KEY_BACKSPACE},
+    {KEY_TILDE, KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9, KEY_0, KEY_MINUS, KEY_EQUAL, KEY_BACKSPACE},
     {KEY_TAB, KEY_Q, KEY_W, KEY_E, KEY_R, KEY_T, KEY_Y, KEY_U, KEY_I, KEY_O, KEY_P, KEY_LEFT_BRACE, KEY_RIGHT_BRACE, KEY_BACKSLASH},
-    {KEY_CAPS_LOCK, KEY_A, KEY_S, KEY_D, KEY_F, KEY_G, KEY_H, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_QUOTE, KEY_ENTER},
+    {KEY_ESC, KEY_A, KEY_S, KEY_D, KEY_F, KEY_G, KEY_H, KEY_J, KEY_K, KEY_L, KEY_SEMICOLON, KEY_QUOTE, KEY_ENTER},
     {MODIFIERKEY_SHIFT, KEY_Z, KEY_X, KEY_C, KEY_V, KEY_B, KEY_N, KEY_M, KEY_COMMA, KEY_PERIOD, KEY_SLASH, 0, MODIFIERKEY_SHIFT},
-    {MODIFIERKEY_CTRL, MODIFIERKEY_ALT, MODIFIERKEY_ALT, 0, 0, KEY_SPACE, 0, 0, 0, MODIFIERKEY_ALT, MODIFIERKEY_ALT, MODIFIERKEY_ALT, MODIFIERKEY_CTRL}
+    {MODIFIERKEY_CTRL, MODIFIERKEY_FN, MODIFIERKEY_ALT, 0, 0, KEY_SPACE, 0, 0, 0, KEY_LEFT, KEY_UP, KEY_DOWN, KEY_RIGHT}
 };
 // ----------------------------------------------------------------------------
 
@@ -37,25 +39,6 @@ byte currentState[NUMBER_OF_ROWS][NUMBER_OF_COLUMNS] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
-void handleStateChange() {
-    int i;
-    int k;
-
-    for (i = 0; i < NUMBER_OF_ROWS; ++i) {
-        for (k = 0; k < NUMBER_OF_COLUMNS; ++k) {
-            if (currentState[i][k] != lastKnownState[i][k]) {
-                if (currentState[i][k] == 1) {
-                    keyDown(i, k);
-                } else {
-                    keyUp(i, k);
-                }
-            }
-            lastKnownState[i][k] = currentState[i][k];
-            currentState[i][k] = 0;
-        }
-    }
-}
-
 void loop() {
     checkForKeypresses();
 }
@@ -73,8 +56,8 @@ void checkForKeypresses() {
             if (columnPressed) {
                 pinMode(rowPins[i], LOW);
 
-                boolean currentKeyDown = (digitalRead(columnPins[k]) == 0);
-                if (currentKeyDown) {\
+                boolean currentKeyDown = digitalRead(columnPins[k]) == 0;
+                if (currentKeyDown) {
                     currentState[i][k] = 1;
                     // Debug stuff
                     // Serial.print(i); Serial.print(":"); Serial.println(k);
@@ -88,6 +71,25 @@ void checkForKeypresses() {
     handleStateChange();
     debounce();
     // debugKeyboard();
+}
+
+void handleStateChange() {
+    int i;
+    int k;
+
+    for (i = 0; i < NUMBER_OF_ROWS; ++i) {
+        for (k = 0; k < NUMBER_OF_COLUMNS; ++k) {
+            if (currentState[i][k] != lastKnownState[i][k]) {
+                if (currentState[i][k] == 1) {
+                    keyDown(i, k);
+                } else {
+                    keyUp(i, k);
+                }
+            }
+            lastKnownState[i][k] = currentState[i][k];
+            currentState[i][k] = 0;
+        }
+    }
 }
 
 void debounce() {
